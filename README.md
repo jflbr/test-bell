@@ -1,5 +1,9 @@
 # Test Bell
 
+<p align="center">
+  <img src="images/logo.png" alt="Test Bell Logo" width="128" />
+</p>
+
 A VS Code extension that plays a sound when a test run fails, and optionally when all tests pass.
 
 ## Features
