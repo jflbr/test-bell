@@ -1,0 +1,68 @@
+{
+  "name": "test-bell",
+  "displayName": "Test Bell",
+  "description": "Plays a sound when a test run fails (and optionally when it passes).",
+  "version": "0.1.0",
+  "publisher": "test-bell",
+  "engines": {
+    "vscode": "^1.108.0"
+  },
+  "categories": [
+    "Testing"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "enabledApiProposals": [
+    "testObserver"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Test Bell",
+      "properties": {
+        "testBell.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable the test bell sound."
+        },
+        "testBell.playOnSuccess": {
+          "type": "boolean",
+          "default": false,
+          "description": "Play a sound when all tests pass."
+        },
+        "testBell.volume": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Volume level (supported on macOS via afplay -v)."
+        },
+        "testBell.failSound": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a custom audio file (.wav or .mp3) for test failures. Accepts absolute paths or paths relative to the workspace root."
+        },
+        "testBell.passSound": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a custom audio file (.wav or .mp3) for test passes. Accepts absolute paths or paths relative to the workspace root."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "mocha"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.108.1",
+    "mocha": "^11.7.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.0"
+  }
+}

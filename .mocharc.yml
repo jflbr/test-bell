@@ -1,0 +1,4 @@
+require:
+  - ts-node/register
+  - ./src/test/vscode-mock.ts
+spec: src/test/**/*.test.ts
