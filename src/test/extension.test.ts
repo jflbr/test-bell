@@ -2,7 +2,8 @@ import * as assert from 'assert';
 import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
-import { resolveAudioCommand, resolveSoundPath, hasFailedTests } from '../extension';
+import { resolveAudioCommand, resolveSoundPath } from '../soundPlayer';
+import { ResultAnalyzer } from '../resultAnalyzer';
 
 describe('resolveAudioCommand', () => {
 	describe('macOS (darwin)', () => {
@@ -105,9 +106,11 @@ describe('resolveSoundPath', () => {
 	});
 });
 
-describe('hasFailedTests', () => {
+describe('ResultAnalyzer', () => {
+	const analyzer = new ResultAnalyzer();
+
 	it('should return false for empty array', () => {
-		assert.strictEqual(hasFailedTests([]), false);
+		assert.strictEqual(analyzer.hasFailures([]), false);
 	});
 
 	it('should return false when all tests pass', () => {
@@ -115,7 +118,7 @@ describe('hasFailedTests', () => {
 			{ taskStates: [{ state: 3 /* Passed */ }], children: [] },
 			{ taskStates: [{ state: 3 /* Passed */ }], children: [] },
 		];
-		assert.strictEqual(hasFailedTests(snapshots), false);
+		assert.strictEqual(analyzer.hasFailures(snapshots), false);
 	});
 
 	it('should return true when a test has failed', () => {
@@ -123,14 +126,14 @@ describe('hasFailedTests', () => {
 			{ taskStates: [{ state: 3 /* Passed */ }], children: [] },
 			{ taskStates: [{ state: 4 /* Failed */ }], children: [] },
 		];
-		assert.strictEqual(hasFailedTests(snapshots), true);
+		assert.strictEqual(analyzer.hasFailures(snapshots), true);
 	});
 
 	it('should return true when a test has errored', () => {
 		const snapshots = [
 			{ taskStates: [{ state: 6 /* Errored */ }], children: [] },
 		];
-		assert.strictEqual(hasFailedTests(snapshots), true);
+		assert.strictEqual(analyzer.hasFailures(snapshots), true);
 	});
 
 	it('should detect failure in nested children', () => {
@@ -145,7 +148,7 @@ describe('hasFailedTests', () => {
 				],
 			},
 		];
-		assert.strictEqual(hasFailedTests(snapshots), true);
+		assert.strictEqual(analyzer.hasFailures(snapshots), true);
 	});
 
 	it('should detect failure in deeply nested children', () => {
@@ -165,13 +168,13 @@ describe('hasFailedTests', () => {
 				],
 			},
 		];
-		assert.strictEqual(hasFailedTests(snapshots), true);
+		assert.strictEqual(analyzer.hasFailures(snapshots), true);
 	});
 
-	it('should return true for skipped tests only as not failed', () => {
+	it('should return false for skipped tests', () => {
 		const snapshots = [
 			{ taskStates: [{ state: 5 /* Skipped */ }], children: [] },
 		];
-		assert.strictEqual(hasFailedTests(snapshots), false);
+		assert.strictEqual(analyzer.hasFailures(snapshots), false);
 	});
 });
