@@ -4,6 +4,7 @@
   "description": "Plays a sound when a test run fails (and optionally when it passes).",
   "version": "0.3.0",
   "publisher": "jflbr",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/jflbr/test-bell.git"
