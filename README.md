@@ -16,16 +16,44 @@ A VS Code extension that plays a sound when a test run fails, and optionally whe
 
 ## How It Works
 
-Run your tests from the VS Code Test Explorer. Test Bell listens for results and plays a sound when any test fails. The example below shows Python tests using the `unittest` module, but it works with any test framework that integrates with VS Code's Test Explorer (pytest, Jest, Vitest, Go tests, etc.).
+Test Bell detects test runs from multiple sources:
+
+- **Terminal commands** — Automatically recognizes test runners (`pytest`, `npm test`, `jest`, `go test`, `cargo test`, etc.) and test file naming conventions (`test_*.py`, `*.test.js`, `*.spec.ts`, etc.) run in the integrated terminal
+- **VS Code Tasks** — Catches tasks with the `test` group or "test" in the task name from `tasks.json`
+- **Testing UI sidebar** — Supports the VS Code Test Explorer (requires opt-in, see [below](#testing-ui-support))
 
 ![Test Explorer example showing failed Python unittest](images/test-explorer-example.png)
+
+### Testing UI Support
+
+The VS Code Testing UI (sidebar, inline "Run Test" buttons) uses a proposed API that isn't yet stable. Test Bell can use it, but you need to opt in.
+
+Alternatively, you can pass the flag when launching from the terminal (applies to that session only):
+
+```bash
+code --enable-proposed-api jflbr.test-bell
+```
+
+Without this, Test Bell still works for terminal-based and task-based test runs.
+
+**Alternatively**, open the Command Palette and run **Preferences: Configure Runtime Arguments** (this opens `~/.vscode/argv.json`), then add:
+
+```jsonc
+{
+  "enable-proposed-api": ["jflbr.test-bell"]
+}
+```
+
+You can also edit `~/.vscode/argv.json` directly. Restart VS Code for the change to take effect. This persists across all launch methods (dock icon, `code` CLI, file associations).
+
+To disable it, remove the entry from the array and restart.
 
 ## Configuration
 
 | Setting | Type | Default | Description |
 |---|---|---|---|
 | `testBell.enabled` | boolean | `true` | Enable or disable the test bell |
-| `testBell.playOnSuccess` | boolean | `false` | Play a sound when all tests pass |
+| `testBell.playOnSuccess` | boolean | `true` | Play a sound when all tests pass |
 | `testBell.volume` | number | `1` | Volume level (macOS only, via `afplay -v`) |
 | `testBell.failSound` | string | `""` | Custom audio file for failures |
 | `testBell.passSound` | string | `""` | Custom audio file for passes |

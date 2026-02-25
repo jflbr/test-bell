@@ -3,7 +3,8 @@ import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
 import { resolveAudioCommand, resolveSoundPath } from '../soundPlayer';
-import { ResultAnalyzer } from '../resultAnalyzer';
+import { vscode, onDidEndTaskProcessEmitter, onDidEndTerminalShellExecutionEmitter } from './vscode-mock';
+import { TaskObserver, TerminalObserver } from '../testObserver';
 
 describe('resolveAudioCommand', () => {
 	describe('macOS (darwin)', () => {
@@ -106,75 +107,202 @@ describe('resolveSoundPath', () => {
 	});
 });
 
-describe('ResultAnalyzer', () => {
-	const analyzer = new ResultAnalyzer();
+describe('TaskObserver', () => {
+	it('should emit passed: true when a test-group task exits with code 0', (done) => {
+		const observer = new TaskObserver();
+		observer.onTestRunCompleted((result) => {
+			assert.strictEqual(result.passed, true);
+			observer.dispose();
+			done();
+		});
 
-	it('should return false for empty array', () => {
-		assert.strictEqual(analyzer.hasFailures([]), false);
+		onDidEndTaskProcessEmitter.fire({
+			execution: { task: { name: 'Run Tests', source: 'Workspace', group: vscode.TaskGroup.Test } },
+			exitCode: 0,
+		});
 	});
 
-	it('should return false when all tests pass', () => {
-		const snapshots = [
-			{ taskStates: [{ state: 3 /* Passed */ }], children: [] },
-			{ taskStates: [{ state: 3 /* Passed */ }], children: [] },
-		];
-		assert.strictEqual(analyzer.hasFailures(snapshots), false);
+	it('should emit passed: false when a test-group task exits with non-zero code', (done) => {
+		const observer = new TaskObserver();
+		observer.onTestRunCompleted((result) => {
+			assert.strictEqual(result.passed, false);
+			observer.dispose();
+			done();
+		});
+
+		onDidEndTaskProcessEmitter.fire({
+			execution: { task: { name: 'Run Tests', source: 'Workspace', group: vscode.TaskGroup.Test } },
+			exitCode: 1,
+		});
 	});
 
-	it('should return true when a test has failed', () => {
-		const snapshots = [
-			{ taskStates: [{ state: 3 /* Passed */ }], children: [] },
-			{ taskStates: [{ state: 4 /* Failed */ }], children: [] },
-		];
-		assert.strictEqual(analyzer.hasFailures(snapshots), true);
+	it('should match tasks by name containing "test" even without test group', (done) => {
+		const observer = new TaskObserver();
+		observer.onTestRunCompleted((result) => {
+			assert.strictEqual(result.passed, true);
+			observer.dispose();
+			done();
+		});
+
+		onDidEndTaskProcessEmitter.fire({
+			execution: { task: { name: 'npm test', source: 'npm', group: undefined } },
+			exitCode: 0,
+		});
 	});
 
-	it('should return true when a test has errored', () => {
-		const snapshots = [
-			{ taskStates: [{ state: 6 /* Errored */ }], children: [] },
-		];
-		assert.strictEqual(analyzer.hasFailures(snapshots), true);
+	it('should not emit for non-test tasks', () => {
+		const observer = new TaskObserver();
+		let emitted = false;
+		observer.onTestRunCompleted(() => { emitted = true; });
+
+		onDidEndTaskProcessEmitter.fire({
+			execution: { task: { name: 'build', source: 'npm', group: vscode.TaskGroup.Build } },
+			exitCode: 1,
+		});
+
+		assert.strictEqual(emitted, false);
+		observer.dispose();
+	});
+});
+
+describe('TerminalObserver', () => {
+	it('should emit passed: true when a pytest command exits with code 0', (done) => {
+		const observer = new TerminalObserver();
+		observer.onTestRunCompleted((result) => {
+			assert.strictEqual(result.passed, true);
+			observer.dispose();
+			done();
+		});
+
+		onDidEndTerminalShellExecutionEmitter.fire({
+			execution: { commandLine: { value: 'python -m pytest tests/' } },
+			exitCode: 0,
+		});
 	});
 
-	it('should detect failure in nested children', () => {
-		const snapshots = [
-			{
-				taskStates: [{ state: 3 /* Passed */ }],
-				children: [
-					{
-						taskStates: [{ state: 4 /* Failed */ }],
-						children: [],
-					},
-				],
-			},
-		];
-		assert.strictEqual(analyzer.hasFailures(snapshots), true);
+	it('should emit passed: false when a pytest command fails', (done) => {
+		const observer = new TerminalObserver();
+		observer.onTestRunCompleted((result) => {
+			assert.strictEqual(result.passed, false);
+			observer.dispose();
+			done();
+		});
+
+		onDidEndTerminalShellExecutionEmitter.fire({
+			execution: { commandLine: { value: 'pytest' } },
+			exitCode: 1,
+		});
 	});
 
-	it('should detect failure in deeply nested children', () => {
-		const snapshots = [
-			{
-				taskStates: [{ state: 3 }],
-				children: [
-					{
-						taskStates: [{ state: 3 }],
-						children: [
-							{
-								taskStates: [{ state: 6 /* Errored */ }],
-								children: [],
-							},
-						],
-					},
-				],
-			},
-		];
-		assert.strictEqual(analyzer.hasFailures(snapshots), true);
+	it('should detect python unittest commands', (done) => {
+		const observer = new TerminalObserver();
+		observer.onTestRunCompleted((result) => {
+			assert.strictEqual(result.passed, true);
+			observer.dispose();
+			done();
+		});
+
+		onDidEndTerminalShellExecutionEmitter.fire({
+			execution: { commandLine: { value: 'python -m unittest discover' } },
+			exitCode: 0,
+		});
 	});
 
-	it('should return false for skipped tests', () => {
-		const snapshots = [
-			{ taskStates: [{ state: 5 /* Skipped */ }], children: [] },
-		];
-		assert.strictEqual(analyzer.hasFailures(snapshots), false);
+	it('should detect npm test commands', (done) => {
+		const observer = new TerminalObserver();
+		observer.onTestRunCompleted((result) => {
+			assert.strictEqual(result.passed, false);
+			observer.dispose();
+			done();
+		});
+
+		onDidEndTerminalShellExecutionEmitter.fire({
+			execution: { commandLine: { value: 'npm test' } },
+			exitCode: 1,
+		});
+	});
+
+	it('should detect npm run test commands', (done) => {
+		const observer = new TerminalObserver();
+		observer.onTestRunCompleted((result) => {
+			assert.strictEqual(result.passed, true);
+			observer.dispose();
+			done();
+		});
+
+		onDidEndTerminalShellExecutionEmitter.fire({
+			execution: { commandLine: { value: 'npm run test' } },
+			exitCode: 0,
+		});
+	});
+
+	it('should detect test file names like test_foo.py', (done) => {
+		const observer = new TerminalObserver();
+		observer.onTestRunCompleted((result) => {
+			assert.strictEqual(result.passed, true);
+			observer.dispose();
+			done();
+		});
+
+		onDidEndTerminalShellExecutionEmitter.fire({
+			execution: { commandLine: { value: 'python test_fake_data.py' } },
+			exitCode: 0,
+		});
+	});
+
+	it('should detect test file names with full path', (done) => {
+		const observer = new TerminalObserver();
+		observer.onTestRunCompleted((result) => {
+			assert.strictEqual(result.passed, false);
+			observer.dispose();
+			done();
+		});
+
+		onDidEndTerminalShellExecutionEmitter.fire({
+			execution: { commandLine: { value: '/usr/bin/python3 /home/user/project/test_main.py' } },
+			exitCode: 1,
+		});
+	});
+
+	it('should detect foo_test.py style names', (done) => {
+		const observer = new TerminalObserver();
+		observer.onTestRunCompleted((result) => {
+			assert.strictEqual(result.passed, true);
+			observer.dispose();
+			done();
+		});
+
+		onDidEndTerminalShellExecutionEmitter.fire({
+			execution: { commandLine: { value: 'python foo_test.py' } },
+			exitCode: 0,
+		});
+	});
+
+	it('should detect foo.test.js style names', (done) => {
+		const observer = new TerminalObserver();
+		observer.onTestRunCompleted((result) => {
+			assert.strictEqual(result.passed, true);
+			observer.dispose();
+			done();
+		});
+
+		onDidEndTerminalShellExecutionEmitter.fire({
+			execution: { commandLine: { value: 'node foo.test.js' } },
+			exitCode: 0,
+		});
+	});
+
+	it('should not emit for non-test commands', () => {
+		const observer = new TerminalObserver();
+		let emitted = false;
+		observer.onTestRunCompleted(() => { emitted = true; });
+
+		onDidEndTerminalShellExecutionEmitter.fire({
+			execution: { commandLine: { value: 'npm install' } },
+			exitCode: 0,
+		});
+
+		assert.strictEqual(emitted, false);
+		observer.dispose();
 	});
 });
