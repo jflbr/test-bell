@@ -1,5 +1,9 @@
 # Test Bell
 
+[![Install on VS Code](https://img.shields.io/badge/VS_Code-Install-blue?logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=jflbr.test-bell)
+![Version](https://img.shields.io/vscode-marketplace/v/jflbr.test-bell)
+![Installs](https://img.shields.io/vscode-marketplace/i/jflbr.test-bell)
+
 <p align="center">
   <img src="images/logo.png" alt="Test Bell Logo" width="128" />
 </p>
