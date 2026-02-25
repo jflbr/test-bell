@@ -3,7 +3,7 @@
   "displayName": "Test Bell",
   "description": "Plays a sound when a test run fails (and optionally when it passes).",
   "version": "0.1.0",
-  "publisher": "test-bell",
+  "publisher": "jflbr",
   "engines": {
     "vscode": "^1.108.0"
   },
