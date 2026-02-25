@@ -7,7 +7,7 @@
       "request": "launch",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
-        "--enable-proposed-api=test-bell.test-bell"
+        "--enable-proposed-api=jflbr.test-bell"
       ],
       "outFiles": [
         "${workspaceFolder}/out/**/*.js"
