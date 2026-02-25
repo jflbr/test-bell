@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.0 — Stable API & Custom Multi-Source Test Detection
+
+### Changes
+
+- `testBell.playOnSuccess` now defaults to `true`
+- Removed `enabledApiProposals` from `package.json` — the extension is now marketplace-publishable
+- Added **TerminalObserver**: detects test runs in the integrated terminal by matching command patterns (`pytest`, `npm test`, `jest`, `go test`, `cargo test`, etc.) and test file naming conventions (`test_*.py`, `*.test.js`, `*.spec.ts`, etc.)
+- Added **TaskObserver**: detects VS Code tasks with the `test` group or "test" in the task name
+- **ProposedTestObserver** now gracefully degrades at runtime — no crash if the proposed API is unavailable
+- Added debug logging via the **Test Bell** output channel
+- Updated README with detection strategy docs and Testing UI opt-in instructions (`argv.json` / CLI flag)
+
 ## v0.2.0 — Custom Test Observer Wrapper Refactor
 
 ### Why
